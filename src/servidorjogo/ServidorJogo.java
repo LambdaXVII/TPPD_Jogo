@@ -104,25 +104,26 @@ class Heartbeat extends Thread {
     InetAddress Player2Addr = null;
     int Player1Port = -1;
     int Player2Port = -1;
-    
-    Socket SocketServidorJogo = null;
-    
 
-    public Jogo(InetAddress player1Addr, int player1Port, InetAddress player2Addr, int player2Port, Socket socketServidorJogo)  {
-
+    
+    
+    public Jogo(InetAddress player1Addr, int player1Port, InetAddress player2Addr, int player2Port) throws IOException  {
+         
         this.Player1Addr = player1Addr;
         this.Player1Port = player1Port;
         this.Player2Addr = player2Addr;
         this.Player2Port = player2Port;
-        this.SocketServidorJogo = socketServidorJogo;
     }
 
     @Override
     public void run() {
 
         //Lança dois ComunicaJogoCliente com portos e addr e fica à espera de respostas
+       
+        new ComunicaJogoCliente(this.Player1Addr,this.Player1Port).start();  
+        new ComunicaJogoCliente(this.Player2Addr,this.Player2Port).start();  
         
-        
+        //Tratar o que recebe do ComunicaJogoCliente
     }
 }
 
@@ -134,12 +135,13 @@ class ComunicaJogoCliente extends Thread{
 
     InetAddress PlayerAddr = null;
     int PlayerPort = -1;
-    Socket JogoSocket = null;
+    
 
-    public ComunicaJogoCliente(InetAddress playerAddr, int playerPort,Socket jogoSocket){
+    public ComunicaJogoCliente(InetAddress playerAddr, int playerPort){
+        
         this.PlayerAddr = playerAddr;
         this.PlayerPort = playerPort;
-        this.JogoSocket = jogoSocket;
+
     }
     
     @Override
@@ -161,19 +163,19 @@ class ComunicaJogoCliente extends Thread{
 
                 String mensagem = "TIME";
 
-                while (!mensagem.equalsIgnoreCase("fim")) {
-
+                while (true) {
+                    sleep(2000);
                     out.println(mensagem);
                     out.flush();
                     
                     response = in.readLine();
                 
                     if (response == null ) {
-                        System.out.println("O servidor nao enviou qualquer respota antes de"
+                        System.out.println("O Jogador nao enviou qualquer respota antes de"
                                 + " fechar a ligacao TCP!");
                     } else {
 
-                        System.out.println("Hora indicada pelo servidor para o Player1: " + response);
+                        System.out.println("resposta do Player: " + response);
                     }
                 }
                 //******************************************************************
@@ -202,7 +204,7 @@ public class ServidorJogo {
 
    
 
-    public static void main(String[] args) 
+    public static void main(String[] args) throws IOException 
     {
         
         InetAddress serverAddr  = null;
@@ -220,14 +222,22 @@ public class ServidorJogo {
             System.out.println("Sintaxe: java UdpTimeClient serverAddress serverUdpPort");
             return;
         }
-
+/*
        Heartbeat hb = new Heartbeat(serverAddr, serverPort);
        hb.run();
+       
+  */    
        
        //Vai à base de dados buscar os dados do cliente
        
        //Inicia Jogo
+       
+        String hostname = "127.0.0.1";
+        InetAddress addr = InetAddress.getByName(hostname);
         
+       Jogo jogo = new Jogo(addr,10001,addr,10002);
+       jogo.start();
+       
    }
   
 }
